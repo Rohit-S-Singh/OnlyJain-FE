@@ -1,4 +1,4 @@
-import React, { useState, FC } from 'react';
+import React,{ useEffect, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -7,33 +7,40 @@ import {
   ScrollView, 
   KeyboardAvoidingView, 
   Platform, 
-  StatusBar 
+  StatusBar,
+  Alert 
 } from 'react-native';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { COLORS } from '../constants/colors';
 import { STRINGS } from '../constants/strings';
 import StyledButton from '../components/common/Button';
 import StyledInput from '../components/common/Input';
 import OtpInput from '../components/common/OtpInput';
+import { getFontSize } from '../utils/fonts';
 
 // ========================================================================
-// Type Definitions for Sub-component Props
+// Type Definitions
 // ========================================================================
 interface PhoneNumberInputViewProps {
   phoneNumber: string;
   setPhoneNumber: (text: string) => void;
   onSendOtp: () => void;
+  isValid: boolean;
+  error: string | null;
+  loading: boolean;
 }
 
 interface OtpVerificationViewProps {
   onVerifyOtp: (otp: string) => void;
   onResendOtp: () => void;
   disabled: boolean;
+  loading: boolean;
 }
 
 // ========================================================================
-// Sub-component for the Phone Number Input View
+// Sub-components
 // ========================================================================
-const PhoneNumberInputView: FC<PhoneNumberInputViewProps> = ({ phoneNumber, setPhoneNumber, onSendOtp }) => {
+const PhoneNumberInputView: React.FC<PhoneNumberInputViewProps> = ({ phoneNumber, setPhoneNumber, onSendOtp, isValid, error, loading }) => {
   return (
     <View style={styles.sectionContainer}>
       <StyledInput
@@ -42,31 +49,25 @@ const PhoneNumberInputView: FC<PhoneNumberInputViewProps> = ({ phoneNumber, setP
         value={phoneNumber}
         onChangeText={setPhoneNumber}
         keyboardType="phone-pad"
-        containerStyle={{}}
-        error={null}
-        // You can add an icon prop to StyledInput if you implement it
+        maxLength={10}
+        error={error}
       />
       <StyledButton
-        title={STRINGS.sendOtp}
+        title={loading ? 'Sending...' : STRINGS.sendOtp}
         onPress={onSendOtp}
-        style={{}}
-        textStyle={{}}
-        disabled={false}
+        disabled={!isValid || loading}
       />
     </View>
   );
 };
 
-// ========================================================================
-// Sub-component for the OTP Verification View
-// ========================================================================
-const OtpVerificationView: FC<OtpVerificationViewProps> = ({ onVerifyOtp, onResendOtp, disabled }) => {
+const OtpVerificationView: React.FC<OtpVerificationViewProps> = ({ onVerifyOtp, onResendOtp, disabled, loading }) => {
   return (
-    // The entire view is semi-transparent and non-interactive when disabled
     <View style={[styles.sectionContainer, disabled && styles.disabledSection]}>
       <Text style={styles.label}>{STRINGS.enterOtp}</Text>
       <Text style={styles.subLabel}>{STRINGS.verifyAccount}</Text>
-      <OtpInput onComplete={onVerifyOtp} />
+      {/* The OtpInput component itself doesn't have a loading state, but the parent view is disabled */}
+      <OtpInput onComplete={onVerifyOtp} disabled={disabled} />
       <View style={styles.resendContainer}>
         <Text style={styles.resendText}>{STRINGS.didntReceiveOtp} </Text>
         <TouchableOpacity onPress={onResendOtp} disabled={disabled} style={styles.resendButton}>
@@ -78,27 +79,69 @@ const OtpVerificationView: FC<OtpVerificationViewProps> = ({ onVerifyOtp, onRese
 };
 
 // ========================================================================
-// Main LoginScreen Component
+// Main LoginScreen Component with Firebase Logic
 // ========================================================================
-const LoginScreen: FC = () => {
+const LoginScreen: React.FC = () => {
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [isOtpSent, setIsOtpSent] = useState<boolean>(false);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSendOtp = (): void => {
-    console.log('Sending OTP to:', phoneNumber);
-    setIsOtpSent(true); 
+  // This state will hold the confirmation result from Firebase
+  const [confirm, setConfirm] = useState<FirebaseAuthTypes.ConfirmationResult | null>(null);
+
+  const isPhoneValid = phoneNumber.length === 10;
+
+  useEffect(() => {
+    if (phoneNumber.length > 0 && phoneNumber.length < 10) {
+      setPhoneError('Phone number must be 10 digits.');
+    } else {
+      setPhoneError(null);
+    }
+  }, [phoneNumber]);
+
+  // --- Firebase Handler Functions ---
+
+  const handleSendOtp = async (): Promise<void> => {
+    if (!isPhoneValid) {
+      setPhoneError('Please enter a valid 10-digit phone number.');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Use the Indian country code +91
+      const confirmation = await auth().signInWithPhoneNumber(`+91${phoneNumber}`);
+      setConfirm(confirmation); // Store the confirmation object
+      setIsOtpSent(true);
+      Alert.alert('OTP Sent!', 'Please check your messages.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to send OTP. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyOtp = (otp: string): void => {
-    if (isOtpSent) {
-      console.log('Verifying OTP:', otp);
-      // On success, navigate to the next screen
+  const handleVerifyOtp = async (otp: string): Promise<void> => {
+    if (isOtpSent && confirm) {
+      setLoading(true);
+      try {
+        await confirm.confirm(otp);
+        // User is now signed in!
+        Alert.alert('Success!', 'You are logged in.');
+        // Here you would navigate to the next screen (e.g., RoleSelectionScreen)
+      } catch (error: any) {
+        Alert.alert('Invalid Code', error.message || 'The OTP you entered is incorrect.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
   
   const handleResendOtp = (): void => {
     if (isOtpSent) {
-      console.log('Resending OTP...');
+      // For simplicity, we can just call handleSendOtp again.
+      // In a real app, you might want a timer here.
+      handleSendOtp();
     }
   };
 
@@ -110,22 +153,24 @@ const LoginScreen: FC = () => {
         style={styles.keyboardAvoidingView}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          {/* Main Title and Subtitle */}
           <View style={styles.headerContainer}>
             <Text style={styles.title}>{STRINGS.welcomeBack}</Text>
             <Text style={styles.subtitle}>{STRINGS.loginPrompt}</Text>
           </View>
 
-          {/* Both components are now rendered sequentially */}
           <PhoneNumberInputView
             phoneNumber={phoneNumber}
             setPhoneNumber={setPhoneNumber}
             onSendOtp={handleSendOtp}
+            isValid={isPhoneValid}
+            error={phoneError}
+            loading={loading && !isOtpSent}
           />
           <OtpVerificationView
             onVerifyOtp={handleVerifyOtp}
             onResendOtp={handleResendOtp}
-            disabled={!isOtpSent} // OTP view is disabled until OTP is sent
+            disabled={!isOtpSent}
+            loading={loading && isOtpSent}
           />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -133,13 +178,10 @@ const LoginScreen: FC = () => {
   );
 };
 
-// ========================================================================
-// Styles (Updated to match the image)
-// ========================================================================
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F0FFF0', // A light green background like the image
+    backgroundColor: '#F0FFF0',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -154,12 +196,12 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontSize: 32,
+    fontSize: getFontSize(32),
     fontWeight: 'bold',
     color: COLORS.textDark,
   },
   subtitle: {
-    fontSize: 18,
+    fontSize:getFontSize(18),
     color: COLORS.placeholder,
     marginTop: 4,
   },
@@ -171,14 +213,14 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   label: {
-    fontSize: 16,
+    fontSize: getFontSize(16),
     fontWeight: 'bold',
     color: COLORS.textDark,
     marginBottom: 15,
     textAlign: 'left',
   },
   subLabel: {
-    fontSize: 14,
+    fontSize: getFontSize(14),
     color: COLORS.placeholder,
     marginBottom: 20,
     textAlign: 'left',
@@ -190,7 +232,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   resendText: {
-    fontSize: 14,
+    fontSize: getFontSize(14),
     color: COLORS.placeholder,
   },
   resendButton: {
@@ -202,9 +244,10 @@ const styles = StyleSheet.create({
   },
   resendButtonText: {
     color: COLORS.textLight,
-    fontSize: 14,
+    fontSize: getFontSize(14),
     fontWeight: 'bold',
   },
 });
 
 export default LoginScreen;
+
