@@ -6,7 +6,7 @@
 export const STRINGS = {
   welcomeBack: 'Welcome Back!',
   loginPrompt: 'Login',
-  phoneOrEmail: 'Phone number or Email address',
+  phoneOrEmail: 'Phone number',
   enterDetailsPlaceholder: 'Enter your details',
   sendOtp: 'Send OTP',
   enterOtp: 'Enter OTP',

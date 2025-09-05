@@ -63,23 +63,23 @@ export const FONTS = {
   extraBold: 'Roboto-ExtraBold',
   black: 'Roboto-Black',
 };
-export const icons = {
-  back: require('../assets/icons/back.png'),
-  menu: require('../assets/icons/menu.png'),
-  search: require('../assets/icons/search.png'),
-  user: require('../assets/icons/user.png'),
-  cart: require('../assets/icons/cart.png'),
-  home: require('../assets/icons/home.png'),
-  categories: require('../assets/icons/categories.png'),
-  orders: require('../assets/icons/orders.png'),
-  profile: require('../assets/icons/profile.png'),
-};
-export const images = {
-  logo: require('../assets/images/logo.png'),
-  splash: require('../assets/images/splash.png'),
-  placeholder: require('../assets/images/placeholder.png'),
-};
+// export const icons = {
+//   back: require('../assets/icons/back.png'),
+//   menu: require('../assets/icons/menu.png'),
+//   search: require('../assets/icons/search.png'),
+//   user: require('../assets/icons/user.png'),
+//   cart: require('../assets/icons/cart.png'),
+//   home: require('../assets/icons/home.png'),
+//   categories: require('../assets/icons/categories.png'),
+//   orders: require('../assets/icons/orders.png'),
+//   profile: require('../assets/icons/profile.png'),
+// };
+// export const images = {
+//   logo: require('../assets/images/logo.png'),
+//   splash: require('../assets/images/splash.png'),
+//   placeholder: require('../assets/images/placeholder.png'),
+// };
 
-const appTheme = { COLORS, SIZES, FONTS, SHADOWS, icons, images };
+const appTheme = { COLORS, SIZES, FONTS, SHADOWS};
 
 export default appTheme;

@@ -1,83 +1,145 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import React, { useState, FC } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet,  
+  TouchableOpacity, 
+  ScrollView, 
+  KeyboardAvoidingView, 
+  Platform, 
+  StatusBar 
+} from 'react-native';
 import { COLORS } from '../constants/colors';
 import { STRINGS } from '../constants/strings';
+import StyledButton from '../components/common/Button';
 import StyledInput from '../components/common/Input';
 import OtpInput from '../components/common/OtpInput';
-import StyledButton from '../components/common/Button';
 
-/**
- * The main screen for user authentication.
- * Handles both phone/email input and OTP verification.
- */
-const LoginScreen = () => {
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [isOtpSent, setIsOtpSent] = useState(false);
+// ========================================================================
+// Type Definitions for Sub-component Props
+// ========================================================================
+interface PhoneNumberInputViewProps {
+  phoneNumber: string;
+  setPhoneNumber: (text: string) => void;
+  onSendOtp: () => void;
+}
 
-  // Placeholder function for sending OTP
-  const handleSendOtp = () => {
-    // Add logic to validate phone number and call API
+interface OtpVerificationViewProps {
+  onVerifyOtp: (otp: string) => void;
+  onResendOtp: () => void;
+  disabled: boolean;
+}
+
+// ========================================================================
+// Sub-component for the Phone Number Input View
+// ========================================================================
+const PhoneNumberInputView: FC<PhoneNumberInputViewProps> = ({ phoneNumber, setPhoneNumber, onSendOtp }) => {
+  return (
+    <View style={styles.sectionContainer}>
+      <StyledInput
+        label={STRINGS.phoneOrEmail}
+        placeholder={STRINGS.enterDetailsPlaceholder}
+        value={phoneNumber}
+        onChangeText={setPhoneNumber}
+        keyboardType="phone-pad"
+        containerStyle={{}}
+        error={null}
+        // You can add an icon prop to StyledInput if you implement it
+      />
+      <StyledButton
+        title={STRINGS.sendOtp}
+        onPress={onSendOtp}
+        style={{}}
+        textStyle={{}}
+        disabled={false}
+      />
+    </View>
+  );
+};
+
+// ========================================================================
+// Sub-component for the OTP Verification View
+// ========================================================================
+const OtpVerificationView: FC<OtpVerificationViewProps> = ({ onVerifyOtp, onResendOtp, disabled }) => {
+  return (
+    // The entire view is semi-transparent and non-interactive when disabled
+    <View style={[styles.sectionContainer, disabled && styles.disabledSection]}>
+      <Text style={styles.label}>{STRINGS.enterOtp}</Text>
+      <Text style={styles.subLabel}>{STRINGS.verifyAccount}</Text>
+      <OtpInput onComplete={onVerifyOtp} />
+      <View style={styles.resendContainer}>
+        <Text style={styles.resendText}>{STRINGS.didntReceiveOtp} </Text>
+        <TouchableOpacity onPress={onResendOtp} disabled={disabled} style={styles.resendButton}>
+          <Text style={styles.resendButtonText}>{STRINGS.resend}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+// ========================================================================
+// Main LoginScreen Component
+// ========================================================================
+const LoginScreen: FC = () => {
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [isOtpSent, setIsOtpSent] = useState<boolean>(false);
+
+  const handleSendOtp = (): void => {
     console.log('Sending OTP to:', phoneNumber);
-    setIsOtpSent(true); // Move to OTP view
+    setIsOtpSent(true); 
   };
 
-  // Placeholder function for verifying OTP
-  const handleVerifyOtp = (otp) => {
-    console.log('Verifying OTP:', otp);
-    // Add logic to call verification API
-    // On success, navigate to RoleSelection or Home
+  const handleVerifyOtp = (otp: string): void => {
+    if (isOtpSent) {
+      console.log('Verifying OTP:', otp);
+      // On success, navigate to the next screen
+    }
   };
   
-  // Placeholder function for resending OTP
-  const handleResendOtp = () => {
-    console.log('Resending OTP...');
-    // Add timer and resend logic
+  const handleResendOtp = (): void => {
+    if (isOtpSent) {
+      console.log('Resending OTP...');
+    }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
       <KeyboardAvoidingView 
         behavior={Platform.OS === "ios" ? "padding" : "height"} 
         style={styles.keyboardAvoidingView}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.title}>{STRINGS.welcomeBack}</Text>
-          <Text style={styles.subtitle}>{STRINGS.loginPrompt}</Text>
+          {/* Main Title and Subtitle */}
+          <View style={styles.headerContainer}>
+            <Text style={styles.title}>{STRINGS.welcomeBack}</Text>
+            <Text style={styles.subtitle}>{STRINGS.loginPrompt}</Text>
+          </View>
 
-          {!isOtpSent ? (
-            <View style={styles.inputContainer}>
-              <StyledInput
-                label={STRINGS.phoneOrEmail}
-                placeholder={STRINGS.enterDetailsPlaceholder}
-                value={phoneNumber}
-                onChangeText={setPhoneNumber}
-                keyboardType="phone-pad"
-              />
-              <StyledButton title={STRINGS.sendOtp} onPress={handleSendOtp} />
-            </View>
-          ) : (
-            <View style={styles.otpContainer}>
-              <Text style={styles.otpHeader}>{STRINGS.enterOtp}</Text>
-              <Text style={styles.otpSubHeader}>{STRINGS.verifyAccount}</Text>
-              <OtpInput onComplete={handleVerifyOtp} />
-              <View style={styles.resendContainer}>
-                <Text style={styles.resendText}>{STRINGS.didntReceiveOtp} </Text>
-                <TouchableOpacity onPress={handleResendOtp}>
-                  <Text style={[styles.resendText, styles.resendLink]}>{STRINGS.resend}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
+          {/* Both components are now rendered sequentially */}
+          <PhoneNumberInputView
+            phoneNumber={phoneNumber}
+            setPhoneNumber={setPhoneNumber}
+            onSendOtp={handleSendOtp}
+          />
+          <OtpVerificationView
+            onVerifyOtp={handleVerifyOtp}
+            onResendOtp={handleResendOtp}
+            disabled={!isOtpSent} // OTP view is disabled until OTP is sent
+          />
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
+// ========================================================================
+// Styles (Updated to match the image)
+// ========================================================================
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F0FFF0', // A light green background like the image
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -85,49 +147,62 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 25,
+  },
+  headerContainer: {
+    alignItems: 'center',
+    marginBottom: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: COLORS.textDark,
-    textAlign: 'center',
   },
   subtitle: {
     fontSize: 18,
     color: COLORS.placeholder,
-    textAlign: 'center',
+    marginTop: 4,
+  },
+  sectionContainer: {
+    width: '100%',
     marginBottom: 40,
   },
-  inputContainer: {
-    width: '100%',
+  disabledSection: {
+    opacity: 0.5,
   },
-  otpContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  otpHeader: {
-    fontSize: 22,
+  label: {
+    fontSize: 16,
     fontWeight: 'bold',
     color: COLORS.textDark,
-    marginBottom: 8,
+    marginBottom: 15,
+    textAlign: 'left',
   },
-  otpSubHeader: {
-    fontSize: 16,
+  subLabel: {
+    fontSize: 14,
     color: COLORS.placeholder,
-    marginBottom: 30,
-    textAlign: 'center',
+    marginBottom: 20,
+    textAlign: 'left',
   },
   resendContainer: {
     flexDirection: 'row',
-    marginTop: 30,
+    marginTop: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   resendText: {
     fontSize: 14,
     color: COLORS.placeholder,
   },
-  resendLink: {
-    color: COLORS.primary,
+  resendButton: {
+    marginLeft: 5,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+  },
+  resendButtonText: {
+    color: COLORS.textLight,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
