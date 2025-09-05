@@ -1,45 +1,22 @@
+import React from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import { Text } from 'react-native';
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
+ * The main entry point for the Sattvik app.
+ * It wraps the entire application with necessary providers.
  */
-
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
+const App = () => {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      {/* In the future, a Redux Provider will wrap the RootNavigator 
+        to manage global state.
+      */}
+      <View style={{ flex: 1 }}>
+        <Text>App Component</Text>
+      </View>
     </SafeAreaProvider>
   );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
+};
 
 export default App;
