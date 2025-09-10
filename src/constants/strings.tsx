@@ -1,0 +1,20 @@
+export const STRINGS = {
+  welcomeBack: 'Welcome Back!',
+  loginPrompt: 'Login',
+  phoneOrEmail: 'Phone number',
+  enterDetailsPlaceholder: 'Enter your details',
+  sendOtp: 'Send OTP',
+  enterOtp: 'Enter OTP',
+  verifyAccount: 'Verify your account',
+  didntReceiveOtp: "Didn't receive the OTP?",
+  resend: 'Resend',
+  selectYourRole: 'Select Your Role',
+  iAmACustomer: 'I am a Customer',
+  iAmAVendor: 'I am a Vendor',
+  pleaseTryAgain: 'Something went wrong. Please try again.',
+  internalServer: 'Internal server error. Please try again later.',
+  appName: 'Sattvik',
+  ok: 'OK',
+  cancel: 'Cancel',
+};
+
