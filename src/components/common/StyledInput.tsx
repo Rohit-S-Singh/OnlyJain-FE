@@ -76,6 +76,7 @@ const styles = StyleSheet.create({
     paddingVertical: hp(1.5),
     fontSize: hp(2),
     color: COLORS.textDark,
+    letterSpacing: 0, 
   },
   errorText: {
     color: COLORS.error,
