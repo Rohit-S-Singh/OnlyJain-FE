@@ -1,16 +1,23 @@
-/* eslint-disable quotes */
+// src/redux/thunks/authThunk.ts
 
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { BASE_URL, SEND_OTP, VERIFY_OTP } from "../../../api/EndPoints";
+import { SEND_OTP, VERIFY_OTP } from "../../../api/EndPoints"; // Assuming you have these constants
 import { handleApiThunk } from "../../../utils/responseParser";
 import { commonApi } from "../../../api/CommonApi";
 import { ApiConstants } from "../../../utils/constants";
 
+interface SendOtpParams {
+  phoneNumber: string;
+}
+interface VerifyOtpParams {
+  phoneNumber: string;
+  otp: string;
+}
 
-//POST - SEND OTP
+// POST - SEND OTP
 export const postSendOtp = createAsyncThunk(
   SEND_OTP,
-  async (params: any, { rejectWithValue }) =>
+  async (params: SendOtpParams, { rejectWithValue }) =>
     handleApiThunk<any>(
       () =>
         commonApi({
@@ -25,10 +32,10 @@ export const postSendOtp = createAsyncThunk(
     )
 );
 
-//POST - VERIFY OTP
+// POST - VERIFY OTP
 export const postVerifyOtp = createAsyncThunk(
   VERIFY_OTP,
-  async (params: any, { rejectWithValue }) =>
+  async (params: VerifyOtpParams, { rejectWithValue }) =>
     handleApiThunk<any>(
       () =>
         commonApi({

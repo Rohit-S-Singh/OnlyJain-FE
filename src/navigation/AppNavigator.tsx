@@ -16,7 +16,9 @@ import HomeScreen from '../screens/HomeScreen/HomeScreen';
 const Stack = createNativeStackNavigator();
 
 export const AppNavigator = () => {
-  const { isAuthenticated, isNewUser } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const { isNewUser } = useSelector((state: RootState) => state.auth.user || {});
+
 
   return (
     <NavigationContainer>

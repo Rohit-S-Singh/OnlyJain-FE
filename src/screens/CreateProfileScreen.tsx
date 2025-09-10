@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   Alert,
   Keyboard,
@@ -16,7 +16,9 @@ import {
 } from 'react-native';
 
 // Import the shared theme file
-import { COLORS } from '../constants/colors';// NOTE: Adjust this path to your project structure
+import {COLORS} from '../constants/colors'; // NOTE: Adjust this path to your project structure
+import {useDispatch} from 'react-redux';
+import {logout} from '../redux/store/slices/authSlice';
 
 // ========================================================================
 // Modular Sub-components (within the same file)
@@ -31,14 +33,15 @@ interface FormInputProps {
 /**
  * A reusable input component with custom focus styling.
  */
-const FormInput: React.FC<FormInputProps> = ({ placeholder, value, onChangeText }) => {
+const FormInput: React.FC<FormInputProps> = ({
+  placeholder,
+  value,
+  onChangeText,
+}) => {
   const [isFocused, setIsFocused] = useState(false);
   return (
     <TextInput
-      style={[
-        styles.input,
-        isFocused && { borderBottomColor: COLORS.primary },
-      ]}
+      style={[styles.input, isFocused && {borderBottomColor: COLORS.primary}]}
       placeholder={placeholder}
       placeholderTextColor={COLORS.placeholder}
       value={value}
@@ -59,17 +62,21 @@ interface ActionButtonProps {
 /**
  * A reusable button component for primary actions.
  */
-const ActionButton: React.FC<ActionButtonProps> = ({ title, onPress, backgroundColor, disabled }) => (
+const ActionButton: React.FC<ActionButtonProps> = ({
+  title,
+  onPress,
+  backgroundColor,
+  disabled,
+}) => (
   <TouchableOpacity
     style={[
       styles.button,
-      { backgroundColor },
-      disabled && { backgroundColor: COLORS.placeholder }, // Use placeholder color for disabled state
+      {backgroundColor},
+      disabled && {backgroundColor: COLORS.placeholder}, // Use placeholder color for disabled state
     ]}
     onPress={onPress}
     disabled={disabled}
-    activeOpacity={0.7}
-  >
+    activeOpacity={0.7}>
     <Text style={styles.buttonText}>{title}</Text>
   </TouchableOpacity>
 );
@@ -83,15 +90,21 @@ const CreateProfileScreen = () => {
   const [fullName, setFullName] = useState('');
   const [businessAddress, setBusinessAddress] = useState('');
   const [locationAccessGranted, setLocationAccessGranted] = useState(false);
-
+  const dispatch = useDispatch();
   // --- Validation Logic ---
-  const isProceedDisabled = !fullName || !businessAddress || !locationAccessGranted;
+  const isProceedDisabled =
+    !fullName || !businessAddress || !locationAccessGranted;
 
   // --- Event Handlers ---
 
   /**
    * Handles the logic for requesting location permission.
    */
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
+
   const handleAllowLocation = async () => {
     if (Platform.OS === 'android') {
       try {
@@ -99,7 +112,8 @@ const CreateProfileScreen = () => {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: 'Location Access Required',
-            message: 'This app needs to access your location to register your business.',
+            message:
+              'This app needs to access your location to register your business.',
             buttonNeutral: 'Ask Me Later',
             buttonNegative: 'Cancel',
             buttonPositive: 'OK',
@@ -109,7 +123,10 @@ const CreateProfileScreen = () => {
           setLocationAccessGranted(true);
           Alert.alert('Success', 'Location access granted!');
         } else {
-          Alert.alert('Permission Denied', 'Location access is required to proceed.');
+          Alert.alert(
+            'Permission Denied',
+            'Location access is required to proceed.',
+          );
         }
       } catch (err) {
         console.warn(err);
@@ -127,11 +144,14 @@ const CreateProfileScreen = () => {
    */
   const handleProceed = () => {
     if (isProceedDisabled) {
-      Alert.alert('Incomplete Profile', 'Please provide your name, address, and grant location access.');
+      Alert.alert(
+        'Incomplete Profile',
+        'Please provide your name, address, and grant location access.',
+      );
       return;
     }
     console.log('Proceeding with profile creation...');
-    console.log({ fullName, businessAddress });
+    console.log({fullName, businessAddress});
     Alert.alert('Profile Created!', `Welcome, ${fullName}!`);
     // Navigate to the next screen here
   };
@@ -139,11 +159,13 @@ const CreateProfileScreen = () => {
   // --- Render Method ---
   return (
     <SafeAreaView style={styles.safeArea}>
+      <TouchableOpacity onPress={handleLogout}>
+        <Text>Log Out</Text>
+      </TouchableOpacity>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
+        style={styles.container}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.innerContainer}>
             <Text style={styles.title}>Create Your Profile</Text>
@@ -163,9 +185,15 @@ const CreateProfileScreen = () => {
 
             <View style={styles.buttonContainer}>
               <ActionButton
-                title={locationAccessGranted ? 'Location Access Granted' : 'Allow Location Access'}
+                title={
+                  locationAccessGranted
+                    ? 'Location Access Granted'
+                    : 'Allow Location Access'
+                }
                 onPress={handleAllowLocation}
-                backgroundColor={locationAccessGranted ? COLORS.secondary : COLORS.primary}
+                backgroundColor={
+                  locationAccessGranted ? COLORS.secondary : COLORS.primary
+                }
               />
               <ActionButton
                 title="Proceed"

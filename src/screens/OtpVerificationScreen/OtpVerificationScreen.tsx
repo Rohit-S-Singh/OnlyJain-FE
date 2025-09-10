@@ -1,10 +1,9 @@
 // src/screens/OtpVerificationScreen/OtpVerificationScreen.tsx
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   TouchableOpacity,
   ScrollView,
   KeyboardAvoidingView,
@@ -14,25 +13,26 @@ import {
   TextInput,
   SafeAreaView,
 } from 'react-native';
-import { heightPercentageToDP as hp, widthPercentageToDP as wp } from 'react-native-responsive-screen';
 import { RouteProp, useRoute, useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { STRINGS } from '../../constants/strings';
 import { COLORS } from '../../constants/colors';
 import { styles } from './OtpVerificationScreen.styles';
+import { AppDispatch, RootState } from '../../redux/store/store';
+import { postSendOtp, postVerifyOtp } from '../../redux/store/thunks/authThunk';
 
 // Define navigation prop types for type safety
 type RootStackParamList = {
-  Login: undefined; // Added Login to the param list
+  Login: undefined;
   OtpVerification: { phoneNumber: string };
 };
 type OtpScreenRouteProp = RouteProp<RootStackParamList, 'OtpVerification'>;
 type OtpScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Login'>;
 
-
 const OtpInput = ({ onComplete }: { onComplete: (otp: string) => void }) => {
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = React.useState('');
   return (
     <TextInput
       style={styles.otpInput}
@@ -53,33 +53,38 @@ const OtpInput = ({ onComplete }: { onComplete: (otp: string) => void }) => {
 
 const OtpVerificationScreen: React.FC = () => {
   const route = useRoute<OtpScreenRouteProp>();
-  const navigation = useNavigation<OtpScreenNavigationProp>(); // Hook for navigation
-  const { phoneNumber } = route.params;
-  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation<OtpScreenNavigationProp>();
+  const dispatch = useDispatch<AppDispatch>();
 
-  const handleVerifyOtp = (otp: string): void => {
-    setLoading(true);
-    setTimeout(() => {
-      if (otp.length === 4) {
-        Alert.alert('Success!', 'You are logged in.');
-        // Navigate to the main app screen here
-      } else {
-        Alert.alert('Invalid Code', 'The OTP you entered is incorrect.');
-      }
-      setLoading(false);
-    }, 1500);
+  const { phoneNumber } = route.params;
+  const { loading, error } = useSelector((state: RootState) => state.auth);
+
+  const handleVerifyOtp = async (otp: string): Promise<void> => {
+    const params = { phoneNumber: `+91${phoneNumber}`, otp };
+    try {
+      // Dispatch the thunk and wait for the result
+      await dispatch(postVerifyOtp(params)).unwrap();
+      // On success, the AppNavigator will automatically switch screens.
+      // We don't need to navigate manually here.
+      console.log('✅ OTP Verified Successfully!');
+    } catch (rejectedValue) {
+      // .unwrap() throws the rejected payload on failure
+      Alert.alert('Verification Failed', rejectedValue as string);
+    }
   };
 
-  const handleResendOtp = (): void => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert('OTP Resent!', 'Please check your messages again.');
-    }, 1500);
+  const handleResendOtp = async (): Promise<void> => {
+    const params = { phoneNumber: `+91${phoneNumber}` };
+    try {
+      await dispatch(postSendOtp(params)).unwrap();
+      Alert.alert('OTP Resent!', 'A new code has been sent to your number.');
+    } catch (rejectedValue) {
+      Alert.alert('Error', rejectedValue as string);
+    }
   };
 
   const handleChangeNumber = () => {
-    navigation.goBack(); // Navigate to the previous screen in the stack
+    navigation.goBack();
   };
 
   return (
@@ -111,17 +116,14 @@ const OtpVerificationScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
 
-            {/* --- NEW CHANGE HERE --- */}
             <TouchableOpacity onPress={handleChangeNumber} style={styles.changeNumberButton}>
               <Text style={styles.changeNumberButtonText}>Change Number?</Text>
             </TouchableOpacity>
-
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
-
 
 export default OtpVerificationScreen;
